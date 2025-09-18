@@ -3,7 +3,7 @@ from typing import Union
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-SECRET_KEY = "YOUR_SUPER_SECRET_KEY"
+SECRET_KEY = "a55d72bab7476385e3114ea4cdd7eff2a7f0bc1bdb690dc4d539f0367c3b3d63"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

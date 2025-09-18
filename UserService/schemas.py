@@ -1,12 +1,21 @@
 from pydantic import BaseModel, EmailStr
+import uuid
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
+# Schema for token data
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-class TokenData(BaseModel):
-    email: str | None = None
+# Schema for creating a new user (registration)
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+# Schema for reading/returning user data (without the password)
+class User(BaseModel):
+    id: uuid.UUID
+    email: EmailStr
+
+    class Config:
+        from_attributes = True
+
