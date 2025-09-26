@@ -21,7 +21,7 @@ __pycache__/
 *.env
 .venv/
 UserService/venv/
-TriService/venv/
+TripService/venv/
 DriverService/venv/
 
 # Logs
