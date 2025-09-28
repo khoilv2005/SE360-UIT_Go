@@ -1,10 +1,14 @@
 from fastapi import FastAPI, HTTPException, status, Query
 from typing import List, Optional
 from datetime import datetime
+from dotenv import load_dotenv
 
 import crud
 import models
 import schemas
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI(title="UIT-Go Trip Service (MongoDB)", version="1.0.0")
 
@@ -13,11 +17,31 @@ async def get_service_info():
     return {"service": "UIT-Go Trip Service", "version": "1.0", "status": "running", "database": "MongoDB"}
 
 # Trip CRUD routes
+# New flow: FE sends coordinates -> BE returns fare estimates for all vehicle types
+@app.post("/fare-estimate/", response_model=schemas.FareEstimateResponse)
+async def estimate_fare(fare_request: schemas.FareEstimateRequest):
+    """Estimate fare for all vehicle types based on pickup/dropoff coordinates"""
+    pickup_coords = (fare_request.pickup.longitude, fare_request.pickup.latitude)
+    dropoff_coords = (fare_request.dropoff.longitude, fare_request.dropoff.latitude)
+    
+    estimates = await crud.estimate_fare_for_all_vehicles(pickup_coords, dropoff_coords)
+    
+    if not estimates:
+        raise HTTPException(status_code=400, detail="Could not calculate fare estimates")
+    
+    return schemas.FareEstimateResponse(estimates=estimates)
+
 # New endpoints for passenger -> driver flow
 @app.post("/trip-requests/", response_model=schemas.TripResponse, status_code=status.HTTP_201_CREATED)
 async def create_trip_request(trip_request: schemas.TripRequest):
-    """Passenger creates trip request (no driver assigned yet)"""
+    """Passenger creates trip request (no driver assigned yet) - Legacy endpoint"""
     trip_data = await crud.create_trip_request(trip_request)
+    return schemas.TripResponse(**trip_data)
+
+@app.post("/trip-requests/complete/", response_model=schemas.TripResponse, status_code=status.HTTP_201_CREATED)
+async def create_complete_trip_request(trip_request: schemas.TripRequestComplete):
+    """Passenger creates trip request with complete location data from FE"""
+    trip_data = await crud.create_trip_request_complete(trip_request)
     return schemas.TripResponse(**trip_data)
 
 @app.put("/trips/{trip_id}/assign-driver", response_model=schemas.TripResponse)
@@ -28,12 +52,7 @@ async def assign_driver(trip_id: str, assign_data: schemas.AssignDriver):
         raise HTTPException(status_code=404, detail="Trip not found or already assigned")
     return schemas.TripResponse(**trip_data)
 
-# Original endpoint (for backward compatibility)
-@app.post("/trips/", response_model=schemas.TripResponse, status_code=status.HTTP_201_CREATED)
-async def create_trip(trip: schemas.TripCreate):
-    """Create a new trip with nested location, fare, and history"""
-    trip_data = await crud.create_trip(trip)
-    return schemas.TripResponse(**trip_data)
+
 
 @app.get("/trips/{trip_id}", response_model=schemas.TripResponse)
 async def get_trip(trip_id: str):
@@ -107,6 +126,14 @@ async def start_trip(trip_id: str):
     if trip_data is None:
         raise HTTPException(status_code=404, detail="Trip not found")
     return {"message": "Trip started successfully", "trip_id": trip_id, "status": "ON_TRIP"}
+
+@app.post("/trips/{trip_id}/deny")
+async def deny_trip(trip_id: str, deny_data: schemas.AssignDriver):
+    """Driver denies/rejects assigned trip - removes driver and sets back to PENDING"""
+    trip_data = await crud.deny_trip(trip_id, deny_data.driver_id)
+    if trip_data is None:
+        raise HTTPException(status_code=404, detail="Trip not found or cannot be denied")
+    return {"message": "Trip denied successfully - returned to pending", "trip_id": trip_id, "status": "PENDING"}
 
 @app.post("/trips/{trip_id}/complete")
 async def complete_trip(

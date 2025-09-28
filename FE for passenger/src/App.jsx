@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen, LoginScreen, RegisterScreen, ProfileScreen } from './screens';
+import TestLoadingScreen from './screens/TestLoadingScreen/TestLoadingScreen';
 import { authService } from './services';
 
 const Stack = createNativeStackNavigator();
@@ -42,22 +43,30 @@ const App = () => {
         <Stack.Screen 
           name="Home" 
           component={HomeScreen}
-          options={{ title: 'UIT Go' }}
+          options={{ title: 'UIT Go', headerShown: false }}
         />
         <Stack.Screen 
           name="Login" 
           component={LoginScreen}
-          options={{ title: 'Đăng nhập' }}
+          options={{ title: 'Đăng nhập', headerShown: false }}
         />
         <Stack.Screen 
           name="Register" 
           component={RegisterScreen}
-          options={{ title: 'Đăng ký' }}
+          options={{ title: 'Đăng ký' , headerShown: false}}
+          
         />
         <Stack.Screen 
           name="Profile" 
           component={ProfileScreen}
-          options={{ title: 'Thông tin cá nhân' }}
+          options={{ 
+            headerShown: false // Tắt header mặc định để dùng header riêng
+          }}
+        />
+        <Stack.Screen 
+          name="TestLoading" 
+          component={TestLoadingScreen}
+          options={{ title: 'Test Loading' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -4,35 +4,67 @@ from datetime import datetime
 from models import (
     TripStatusEnum, LocationInfo, FareInfo, PaymentInfo, 
     RatingInfo, CancellationInfo, StatusHistory, PaymentMethodEnum,
-    PaymentStatusEnum, CancelledByEnum, GeoLocation
+    PaymentStatusEnum, CancelledByEnum, GeoLocation, VehicleTypeEnum,
+    RouteInfo
 )
 
 # Input schemas for creating/updating
-class LocationCreate(BaseModel):
-    address: str = Field(..., max_length=100)
-    longitude: float = Field(..., ge=-180, le=180)
+# Location with coordinates for fare estimation
+class LocationCoordinates(BaseModel):
     latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+
+# Schema for fare estimation request
+class FareEstimateRequest(BaseModel):
+    pickup: LocationCoordinates
+    dropoff: LocationCoordinates
+
+# Schema for single vehicle fare estimate response
+class VehicleFareEstimate(BaseModel):
+    vehicle_type: VehicleTypeEnum
+    estimated_fare: float
+    distance_meters: float
+    duration_seconds: float
+    route_geometry: dict  # Contains encoded_polyline for FE to decode
+
+# Schema for fare estimation response (all 3 vehicle types)
+class FareEstimateResponse(BaseModel):
+    estimates: List[VehicleFareEstimate]
+
+# Enhanced location with both address and coordinates
+class LocationComplete(BaseModel):
+    address: str = Field(..., max_length=100)
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+
+# Simplified location for trip request (only address)
+class LocationSimple(BaseModel):
+    address: str = Field(..., max_length=100)
+
+# Enhanced trip request with complete location data
+class TripRequestComplete(BaseModel):
+    passenger_id: str
+    pickup: LocationComplete
+    dropoff: LocationComplete
+    vehicle_type: VehicleTypeEnum
+    route_geometry: dict  # GeoJSON LineString from FE
+    payment_method: PaymentMethodEnum = PaymentMethodEnum.CASH
+    notes: Optional[str] = None
 
 # Schema for passenger creating a trip request (no driver yet)
 class TripRequest(BaseModel):
     passenger_id: str
-    pickup: LocationCreate
-    dropoff: LocationCreate
-    estimated_fare: Optional[float] = None
+    pickup: LocationSimple
+    dropoff: LocationSimple
+    vehicle_type: VehicleTypeEnum
+    payment_method: PaymentMethodEnum = PaymentMethodEnum.CASH  # Default to cash
     notes: Optional[str] = None
 
 # Schema for assigning driver to a trip
 class AssignDriver(BaseModel):
     driver_id: str
 
-# Original schema (for backward compatibility)
-class TripCreate(BaseModel):
-    passenger_id: str
-    driver_id: str
-    pickup: LocationCreate
-    dropoff: LocationCreate
-    estimated_fare: Optional[float] = None
-    notes: Optional[str] = None
+
 
 class TripUpdate(BaseModel):
     status: Optional[TripStatusEnum] = None
@@ -64,6 +96,7 @@ class TripResponse(BaseModel):
     id: str = Field(alias="_id")
     passenger_id: str
     driver_id: str
+    vehicle_type: VehicleTypeEnum
     status: TripStatusEnum
     pickup: LocationInfo
     dropoff: LocationInfo
@@ -71,6 +104,7 @@ class TripResponse(BaseModel):
     endTime: Optional[datetime] = None
     created_at: datetime
     fare: FareInfo
+    route_info: Optional[RouteInfo] = None
     payment: Optional[PaymentInfo] = None
     rating: Optional[RatingInfo] = None
     cancellation: Optional[CancellationInfo] = None

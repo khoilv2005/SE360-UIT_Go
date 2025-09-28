@@ -28,6 +28,11 @@ class CancelledByEnum(str, Enum):
     DRIVER = "DRIVER"
     SYSTEM = "SYSTEM"
 
+class VehicleTypeEnum(str, Enum):
+    TWO_SEATER = "2_SEATER"  # Xe 2 chỗ
+    FOUR_SEATER = "4_SEATER"  # Xe 4 chỗ  
+    SEVEN_SEATER = "7_SEATER"  # Xe 7 chỗ
+
 # Nested models for complex structures
 class GeoLocation(BaseModel):
     type: str = "Point"
@@ -63,10 +68,16 @@ class StatusHistory(BaseModel):
     status: TripStatusEnum
     timestamp: datetime = Field(default_factory=datetime.now)
 
+class RouteInfo(BaseModel):
+    distance: float  # Total distance in meters
+    duration: float  # Total duration in seconds  
+    geometry: str    # Encoded polyline for route visualization
+
 class Trip(BaseModel):
     id: Optional[str] = Field(default=None, alias="_id")
     passenger_id: str  # ObjectId as string reference to users collection
     driver_id: str     # ObjectId as string reference to users collection
+    vehicle_type: VehicleTypeEnum  # Type of vehicle requested
     status: TripStatusEnum = TripStatusEnum.PENDING
     
     # Location information with GeoJSON
@@ -80,6 +91,9 @@ class Trip(BaseModel):
     
     # Fare information
     fare: FareInfo = Field(default_factory=FareInfo)
+    
+    # Route information from Mapbox
+    route_info: Optional[RouteInfo] = None
     
     # Payment information
     payment: Optional[PaymentInfo] = None

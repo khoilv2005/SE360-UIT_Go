@@ -1,6 +1,27 @@
 import apiService from './apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// API URLs - Thay đổi BASE_URL để chỉnh sửa tất cả endpoints
+const BASE_URL = 'http://192.168.88.137:8000';
+
+const API_URLS = {
+  LOGIN: `${BASE_URL}/auth/login`,
+  REGISTER: `${BASE_URL}/auth/register`,
+  USER_PROFILE: `${BASE_URL}/users/me`,
+};
+
+// Headers templates
+const HEADERS = {
+  JSON: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  FORM: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Accept': 'application/json',
+  },
+};
+
 class AuthService {
   constructor() {
     this.currentUser = null;
@@ -10,11 +31,9 @@ class AuthService {
   // Login user
   async login(email, password) {
     try {
-      const response = await fetch('http://192.168.88.137:8000/auth/login', {
+      const response = await fetch(API_URLS.LOGIN, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        headers: HEADERS.FORM,
         body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
       });
       
@@ -51,11 +70,9 @@ class AuthService {
   // Register user
   async register(userData) {
     try {
-      const response = await fetch('http://192.168.88.137:8000/auth/register', {
+      const response = await fetch(API_URLS.REGISTER, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: HEADERS.JSON,
         body: JSON.stringify({
           username: userData.username,
           email: userData.email,
@@ -117,11 +134,11 @@ class AuthService {
         throw new Error('No authentication token');
       }
 
-      const response = await fetch('http://192.168.88.137:8000/users/me', {
+      const response = await fetch(API_URLS.USER_PROFILE, {
         method: 'GET',
         headers: {
+          ...HEADERS.JSON,
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
       });
       

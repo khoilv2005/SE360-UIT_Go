@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Alert, Image } from 'react-native';
 import { Button, Input, Loading } from '../../components';
 import { authService } from '../../services';
+import LogoGif from '../../../assets/logo.gif';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -34,10 +35,9 @@ const LoginScreen = ({ navigation }) => {
     setLoading(true);
     try {
       await authService.login(email, password);
-      Alert.alert('Success', 'Logged in successfully!');
       navigation.navigate('Profile');
     } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+      Alert.alert('Lỗi', 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -55,12 +55,16 @@ const LoginScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Login to UIT Go</Text>
+        <Image 
+          source={LogoGif} 
+          style={styles.gif}
+        />
+        <Text style={styles.title}>Đăng nhập vào UIT-Go</Text>
         
         <View style={styles.form}>
           <Input
             label="Email"
-            placeholder="Enter your email"
+            placeholder="Nhập email của bạn"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -68,8 +72,8 @@ const LoginScreen = ({ navigation }) => {
           />
           
           <Input
-            label="Password"
-            placeholder="Enter your password"
+            label="Mật khẩu"
+            placeholder="Nhập mật khẩu"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -77,13 +81,13 @@ const LoginScreen = ({ navigation }) => {
           />
           
           <Button
-            title="Login"
+            title="Đăng nhập"
             onPress={handleLogin}
             style={styles.loginButton}
           />
           
           <Button
-            title="Don't have an account? Register"
+            title="Chưa có tài khoản? Đăng ký"
             onPress={handleRegister}
             variant="outline"
             style={styles.registerButton}
@@ -97,12 +101,18 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#FFFFFF',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
+  },
+  gif: {
+    width: 150,
+    height: 150,
+    alignSelf: 'center',
+    marginBottom: 30,
   },
   title: {
     fontSize: 28,
